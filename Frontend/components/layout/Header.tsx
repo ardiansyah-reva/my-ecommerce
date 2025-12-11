@@ -18,7 +18,7 @@ export const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+      router.push(`/search?search=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -162,7 +162,7 @@ export const Header: React.FC = () => {
         <Link href="/products" className="hover:text-blue-600">
           Semua Produk
         </Link>
-        <Link href="/products?category=1" className="hover:text-blue-600">
+        <Link href="/collections/llug=1" className="hover:text-blue-600">
           Laptop
         </Link>
         <Link href="/products?category=2" className="hover:text-blue-600">

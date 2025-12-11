@@ -1,4 +1,4 @@
-// app/(shop)/products/page.tsx
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
 
-export default function ProductsPage() {
+export default function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
@@ -173,9 +173,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-items-center">
-
-
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
