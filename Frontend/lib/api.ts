@@ -13,6 +13,14 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
 };
 
+export const categoryAPI = {
+  getAll: () => api.get('/categories'),
+  
+  getBySlug: (slug: string) => api.get(`/categories/slug/${slug}`),
+  
+  getById: (id: string | number) => api.get(`/categories/${id}`),
+};
+
 export const productAPI = {
   getAll: (params?: any) => api.get('/products', { params }),
   

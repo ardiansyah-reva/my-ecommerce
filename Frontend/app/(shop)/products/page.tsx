@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 import { ProductCard } from '@/components/product/ProductCard';
-import { productAPI, cartAPI } from '@/lib/api';
-import { Product } from '@/types';
+import { productAPI, cartAPI, categoryAPI } from '@/lib/api';
+import { Product, Category } from '@/types';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'react-hot-toast';
@@ -18,6 +18,7 @@ export default function ProductsPage() {
   const { setCart } = useCartStore();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -30,8 +31,21 @@ export default function ProductsPage() {
   });
 
   useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
   }, [filters, page]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryAPI.getAll();
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -120,11 +134,11 @@ export default function ProductsPage() {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Semua Kategori</option>
-                <option value="1">Laptop</option>
-                <option value="2">Smartphone</option>
-                <option value="3">Gaming Gear</option>
-                <option value="4">Smart Home</option>
-                <option value="5">Wearable Tech</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -173,9 +187,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-items-center">
-
-
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 justify-items-center">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}

@@ -13,12 +13,12 @@ const orderRoutes = require("./order.routes");
 const cartRoutes = require("./cart.routes");
 const paymentRoutes = require("./payment.routes");
 const shipmentRoutes = require("./shipment.routes");
+const categoryRoutes = require("./category.routes"); // TAMBAHKAN INI
 
 // Route utama
 router.get("/", (req, res) => {
   res.json({ message: "API Route Connected" });
 });
-
 
 router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
@@ -32,5 +32,6 @@ router.use("/orders", orderRoutes);
 router.use("/cart", cartRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/shipment", shipmentRoutes);
+router.use("/categories", categoryRoutes); // TAMBAHKAN INI
 
 module.exports = router;
