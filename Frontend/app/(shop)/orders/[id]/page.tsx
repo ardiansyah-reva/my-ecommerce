@@ -17,7 +17,6 @@ import { orderAPI } from '@/lib/api';
 import { Order } from '@/types';
 import { toast } from 'react-hot-toast';
 
-
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -32,10 +31,13 @@ export default function OrderDetailPage() {
 
   const fetchOrder = async () => {
     try {
+      console.log("Fetching order:", params.id);
       const response = await orderAPI.getById(params.id as string);
+      console.log("Order data:", response.data);
       setOrder(response.data.data);
-    } catch (error) {
-      toast.error('Pesanan tidak ditemukan');
+    } catch (error: any) {
+      console.error("Fetch order error:", error);
+      toast.error(error.response?.data?.message || 'Pesanan tidak ditemukan');
       router.push('/orders');
     } finally {
       setLoading(false);
@@ -101,7 +103,16 @@ export default function OrderDetailPage() {
   }
 
   if (!order) {
-    return null;
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-2">Pesanan Tidak Ditemukan</h2>
+          <Button onClick={() => router.push('/orders')}>
+            Kembali ke Daftar Pesanan
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const statusSteps = getStatusSteps(order.status);
@@ -123,33 +134,41 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Status Timeline */}
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
-              <div className="space-y-6">
-                {statusSteps.map((step, idx) => {
-                  const Icon = step.icon;
-                  return (
-                    <div key={step.key} className="relative flex items-center gap-4">
-                      <div
-                        className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
-                          step.isActive
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 text-gray-400'
-                        }`}
-                      >
-                        <Icon size={16} />
+            {order.status !== 'CANCELED' && (
+              <div className="relative">
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                <div className="space-y-6">
+                  {statusSteps.map((step, idx) => {
+                    const Icon = step.icon;
+                    return (
+                      <div key={step.key} className="relative flex items-center gap-4">
+                        <div
+                          className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center ${
+                            step.isActive
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-200 text-gray-400'
+                          }`}
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <div className={step.isActive ? 'text-gray-900' : 'text-gray-400'}>
+                          <div className="font-medium">{step.label}</div>
+                          {step.isCurrent && (
+                            <div className="text-sm text-gray-600">Saat ini</div>
+                          )}
+                        </div>
                       </div>
-                      <div className={step.isActive ? 'text-gray-900' : 'text-gray-400'}>
-                        <div className="font-medium">{step.label}</div>
-                        {step.isCurrent && (
-                          <div className="text-sm text-gray-600">Saat ini</div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {order.status === 'CANCELED' && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p className="text-red-600 font-semibold">Pesanan Dibatalkan</p>
+              </div>
+            )}
           </div>
 
           {/* Shipment Info */}
@@ -212,8 +231,7 @@ export default function OrderDetailPage() {
             <div className="space-y-4">
               {order.items?.map((item) => (
                 <div key={item.id} className="flex gap-4 pb-4 border-b last:border-0">
-                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0
-">
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                     <img
                       src={
                         item.product?.media?.[0]?.url

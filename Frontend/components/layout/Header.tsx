@@ -15,6 +15,16 @@ interface Category {
   slug: string;
 }
 
+// Helper function to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')     // Replace spaces with hyphens
+    .replace(/-+/g, '-');     // Replace multiple hyphens with single hyphen
+};
+
 export const Header: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -31,7 +41,15 @@ export const Header: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const response = await categoryAPI.getAll();
-      setCategories(response.data.data || []);
+      const cats = response.data.data || [];
+      
+      // Generate slug for each category if slug is empty
+      const categoriesWithSlug = cats.map((cat: Category) => ({
+        ...cat,
+        slug: cat.slug || generateSlug(cat.name)
+      }));
+      
+      setCategories(categoriesWithSlug);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
@@ -41,7 +59,7 @@ export const Header: React.FC = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search/${encodeURIComponent(searchQuery)}`);
-      setSearchQuery(''); // Clear search after submit
+      setSearchQuery('');
     }
   };
 
@@ -50,21 +68,27 @@ export const Header: React.FC = () => {
     router.push('/login');
   };
 
+  const handleCategoryClick = (category: Category) => {
+    setShowCategoryMenu(false);
+    // Use category ID instead of slug for navigation
+    router.push(`/products?category=${category.id}`);
+  };
+
   return (
     <header className="bg-white shadow sticky top-0 z-40 border-b">
       {/* Top Bar */}
-      <div className="bg-gray-100 py-1 border-b">
-        <div className="container mx-auto px-4 flex justify-between text-xs text-gray-700">
+      <div className="bg-gray-200 py-1 border-b">
+        <div className="container mx-auto px-4 flex justify-between text-xs  text-gray-700">
           <div className="flex gap-4">
-            <Link href="/seller" className="hover:text-blue-600">Menjadi Seller</Link>
-            <Link href="/help" className="hover:text-blue-600">Customer Care</Link>
+            <Link href="/seller" className="hover:text-amber-400">Menjadi Seller</Link>
+            <Link href="/help" className="hover:text-amber-400">Customer Care</Link>
           </div>
 
           <div className="flex gap-4">
             {isAuthenticated ? (
               <>
                 <span>Hi, {user?.nickname}!</span>
-                <button onClick={handleLogout} className="hover:text-blue-600">
+                <button onClick={handleLogout} className="hover:text-amber-400">
                   Logout
                 </button>
               </>
@@ -83,8 +107,8 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-6">
           
           {/* Logo */}
-          <Link href="/" className="font-bold text-2xl text-blue-600">
-            ShopHub
+          <Link href="/" className="font-bold px-18 text-2xl  text-blue-800">
+            LAJANDA
           </Link>
 
           {/* Search Bar */}
@@ -92,14 +116,14 @@ export const Header: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Cari produk..."
+                placeholder="Cari di bursa"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pr-12 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className=" bg-gray-200 w-full px-4 py-3 pr-12 border border-none focus:outline-none focus:ring-2 focus:ring-white"
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-gray-100 p-2 rounded"
+                className="absolute right-0 top-1/2 -translate-y-1/2 bg-amber-500 p-3 "
               >
                 <Search size={20} className="text-gray-600" />
               </button>
@@ -198,29 +222,34 @@ export const Header: React.FC = () => {
               
               {showCategoryMenu && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-white border rounded-lg shadow-lg py-2 z-50">
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      href={`/collections/${category.slug}`}
-                      className="block px-4 py-2 hover:bg-gray-100 text-gray-700"
-                      onClick={() => setShowCategoryMenu(false)}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
+                  {categories.length === 0 ? (
+                    <div className="px-4 py-2 text-gray-500 text-sm">
+                      Tidak ada kategori
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryClick(category)}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                      >
+                        {category.name}
+                      </button>
+                    ))
+                  )}
                 </div>
               )}
             </div>
 
             {/* Quick Access to Popular Categories */}
             {categories.slice(0, 4).map((category) => (
-              <Link 
+              <button 
                 key={category.id}
-                href={`/collections/${category.slug}`} 
+                onClick={() => handleCategoryClick(category)}
                 className="hover:text-blue-600 py-1"
               >
                 {category.name}
-              </Link>
+              </button>
             ))}
             
             <Link href="/flash-sale" className="text-blue-600 font-semibold py-1">

@@ -7,8 +7,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'ShopHub - Your One Stop Shopping',
-  description: 'Belanja online mudah dan hemat di ShopHub',
+  title: 'bursa - Your One Stop Shopping',
+  description: 'Belanja online mudah dan hemat di bursa',
 };
 
 export default function RootLayout({

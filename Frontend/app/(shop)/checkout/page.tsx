@@ -1,4 +1,3 @@
-
 // app/(shop)/checkout/page.tsx
 'use client';
 
@@ -29,6 +28,8 @@ export default function CheckoutPage() {
       const response = await cartAPI.get();
       const cartData = response.data.data;
       
+      console.log("Cart Data:", cartData);
+      
       if (!cartData.items || cartData.items.length === 0) {
         toast.error('Keranjang kosong');
         router.push('/cart');
@@ -37,6 +38,7 @@ export default function CheckoutPage() {
       
       setCart(cartData);
     } catch (error) {
+      console.error("Fetch cart error:", error);
       toast.error('Gagal memuat keranjang');
       router.push('/cart');
     } finally {
@@ -62,10 +64,14 @@ export default function CheckoutPage() {
   const shippingCost = 0; // Free shipping
 
   const handlePlaceOrder = async () => {
-    if (!cart || !cart.items) return;
+    if (!cart || !cart.items || cart.items.length === 0) {
+      toast.error('Keranjang kosong');
+      return;
+    }
 
     setProcessing(true);
     try {
+      // Format data sesuai yang diharapkan backend
       const orderData = {
         items: cart.items.map((item) => ({
           product_id: item.product_id,
@@ -73,22 +79,59 @@ export default function CheckoutPage() {
         })),
         paymentData: {
           method: paymentMethod,
-          provider: paymentMethod,
+          provider: paymentMethod, // Sama dengan method
         },
         shipmentData: {
           courier: courier,
           shipping_cost: shippingCost,
+          tracking_number: `TRK-${Date.now()}` // Generate tracking number
         },
       };
 
-      const response = await orderAPI.create(orderData);
-      const orderId = response.data.data.order.id;
+      console.log("Sending order data:", orderData);
 
-      clearCart();
-      toast.success('Pesanan berhasil dibuat!');
-      router.push(`/orders/${orderId}`);
+      const response = await orderAPI.create(orderData);
+      
+      console.log("Order response:", response.data);
+
+      if (response.data.status === 'success') {
+        const orderId = response.data.data.order.id;
+
+        console.log("Order created successfully, ID:", orderId);
+
+        // Clear cart setelah order berhasil
+        try {
+          await cartAPI.get(); // Refresh cart
+          clearCart();
+        } catch (e) {
+          console.log("Cart already cleared");
+        }
+
+        toast.success('Pesanan berhasil dibuat!');
+        
+        // IMPORTANT: Pastikan path benar - harus /orders (plural) bukan /order
+        setTimeout(() => {
+          router.push(`/orders/${orderId}`);
+        }, 500);
+      } else {
+        throw new Error(response.data.message || 'Gagal membuat pesanan');
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal membuat pesanan');
+      console.error("Create order error:", error);
+      
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || 'Gagal membuat pesanan';
+      
+      toast.error(errorMessage);
+      
+      // Log detail error untuk debugging
+      if (error.response) {
+        console.error("Error response:", {
+          status: error.response.status,
+          data: error.response.data
+        });
+      }
     } finally {
       setProcessing(false);
     }
@@ -98,6 +141,22 @@ export default function CheckoutPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-2">Keranjang Kosong</h2>
+          <p className="text-gray-600 mb-6">
+            Tidak ada produk di keranjang untuk checkout
+          </p>
+          <Button onClick={() => router.push('/products')}>
+            Mulai Belanja
+          </Button>
+        </div>
       </div>
     );
   }
@@ -227,10 +286,11 @@ export default function CheckoutPage() {
               <Button
                 onClick={handlePlaceOrder}
                 isLoading={processing}
+                disabled={processing || !cart || cart.items.length === 0}
                 className="w-full"
                 size="lg"
               >
-                Buat Pesanan
+                {processing ? 'Memproses...' : 'Buat Pesanan'}
               </Button>
             </div>
           </div>

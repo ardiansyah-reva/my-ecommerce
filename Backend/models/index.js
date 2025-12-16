@@ -1,3 +1,4 @@
+// Backend/models/index.js
 const sequelize = require('../db');
 
 // Import semua models
@@ -56,7 +57,7 @@ Payment.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 Order.hasOne(Shipment, { foreignKey: 'order_id', as: 'shipment' });
 Shipment.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 
-// Export semua models (opsional)
+// Export semua models
 module.exports = {
   User,
   UserAddress,
