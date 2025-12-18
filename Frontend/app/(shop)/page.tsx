@@ -10,6 +10,7 @@ import {
   Package,
   Upload,
   X,
+  Clock,
 } from "lucide-react";
 import { ProductCard } from "@/components/product/ProductCard";
 import { productAPI, cartAPI } from "@/lib/api";
@@ -31,6 +32,16 @@ export default function HomePage() {
   const [heroSlides, setHeroSlides] = useState<string[]>(DEFAULT_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Flash Sale Countdown State
+  const [flashSaleEndTime, setFlashSaleEndTime] = useState<Date>(
+    new Date(Date.now() + 3 * 60 * 60 * 1000 + 30 * 60 * 1000) // Default: 3 jam 30 menit dari sekarang
+  );
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
   // Auto-slide setiap 4 detik
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,6 +49,26 @@ export default function HomePage() {
     }, 4000);
     return () => clearInterval(interval);
   }, [heroSlides.length]);
+
+  // Countdown Timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = flashSaleEndTime.getTime() - now;
+
+      if (distance < 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+      } else {
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        setTimeLeft({ hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [flashSaleEndTime]);
 
   useEffect(() => {
     fetchProducts();
@@ -63,19 +94,16 @@ export default function HomePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validasi tipe file
     if (!file.type.startsWith('image/')) {
       toast.error('File harus berupa gambar');
       return;
     }
 
-    // Validasi ukuran (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Ukuran file maksimal 5MB');
       return;
     }
 
-    // Update slide tertentu
     const url = URL.createObjectURL(file);
     setHeroSlides((prev) => {
       const newSlides = [...prev];
@@ -127,6 +155,13 @@ export default function HomePage() {
     }
   };
 
+  // Fungsi untuk custom waktu flash sale
+  const setCustomFlashSaleTime = (hours: number, minutes: number) => {
+    const newEndTime = new Date(Date.now() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
+    setFlashSaleEndTime(newEndTime);
+    toast.success(`Flash sale diatur berakhir dalam ${hours} jam ${minutes} menit`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -137,16 +172,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Slider - Dengan jarak atas dan max width */}
+      {/* Hero Slider */}
       <section className="pt-6 pb-8 bg-gray-50">
         <div className="container mx-auto px-4">
           <div 
             className="relative overflow-hidden bg-gray-900 rounded-xl shadow-xl mx-auto" 
             style={{ height: '344px', maxWidth: '988px' }}
           >
-            {/* Slider Container */}
             <div className="relative w-full h-full">
-              {/* Slides */}
               {heroSlides.map((slide, idx) => (
                 <div
                   key={idx}
@@ -159,30 +192,24 @@ export default function HomePage() {
                     alt={`Hero slide ${idx + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  {/* Overlay gelap */}
                   <div className="absolute inset-0 bg-black/20" />
                 </div>
               ))}
 
-              {/* Prev Button */}
               <button
                 onClick={prevSlide}
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all z-10 hover:scale-110"
-                aria-label="Previous slide"
               >
                 <ChevronRight size={24} className="rotate-180" />
               </button>
 
-              {/* Next Button */}
               <button
                 onClick={nextSlide}
                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all z-10 hover:scale-110"
-                aria-label="Next slide"
               >
                 <ChevronRight size={24} />
               </button>
 
-              {/* Dot Indicators */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                 {heroSlides.map((_, idx) => (
                   <button
@@ -191,16 +218,13 @@ export default function HomePage() {
                     className={`h-2 rounded-full transition-all ${
                       idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50'
                     }`}
-                    aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}
               </div>
 
-              {/* Control Panel - Tombol Kecil di Pojok Kanan Atas */}
               <div className="absolute top-3 right-3 flex gap-2 z-20">
                 {heroSlides.map((slide, idx) => (
                   <div key={idx} className="relative group">
-                    {/* Input File Hidden */}
                     <input
                       type="file"
                       accept="image/*"
@@ -209,26 +233,21 @@ export default function HomePage() {
                       onChange={handleSlideUpload(idx)}
                     />
 
-                    {/* Button Edit Slide - Tombol Bulat Kecil */}
                     <button
                       onClick={() => document.getElementById(`slideInput-${idx}`)?.click()}
                       className="bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110"
-                      title={`Edit slide ${idx + 1}`}
                     >
                       <Upload size={16} />
                     </button>
 
-                    {/* Tooltip */}
                     <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                       Slide {idx + 1}
                     </span>
 
-                    {/* Button Reset - Muncul di bawah tombol edit jika slide sudah diubah */}
                     {slide !== DEFAULT_SLIDES[idx] && (
                       <button
                         onClick={() => resetSlide(idx)}
                         className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-lg transition-all hover:scale-110"
-                        title={`Reset slide ${idx + 1}`}
                       >
                         <X size={14} />
                       </button>
@@ -246,11 +265,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              {
-                icon: Package,
-                title: "Gratis Ongkir",
-                desc: "Min. belanja 50k",
-              },
+              { icon: Package, title: "Gratis Ongkir", desc: "Min. belanja 50k" },
               { icon: Zap, title: "Flash Sale", desc: "Setiap hari jam 12" },
               { icon: TrendingUp, title: "Cashback", desc: "Hingga 50%" },
               { icon: Package, title: "Garansi", desc: "100% original" },
@@ -269,13 +284,60 @@ export default function HomePage() {
 
       {/* Products Sections */}
       <div className="container mx-auto px-4 py-12 space-y-12">
-        {/* Flash Sale */}
+        {/* Flash Sale with Countdown */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Zap className="text-orange-500" size={32} fill="currentColor" />
-              <h2 className="text-2xl font-bold">Flash Sale Hari Ini</h2>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <Zap className="text-orange-500" size={32} fill="currentColor" />
+                <h2 className="text-2xl font-bold">Flash Sale Hari Ini</h2>
+              </div>
+              
+              {/* Countdown Timer */}
+              <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg">
+                <Clock size={20} />
+                <span className="font-semibold">Berakhir pada:</span>
+                <div className="flex items-center gap-1 font-mono text-lg">
+                  <div className="bg-white/20 px-2 py-1 rounded">
+                    {String(timeLeft.hours).padStart(2, '0')}
+                  </div>
+                  <span>:</span>
+                  <div className="bg-white/20 px-2 py-1 rounded">
+                    {String(timeLeft.minutes).padStart(2, '0')}
+                  </div>
+                  <span>:</span>
+                  <div className="bg-white/20 px-2 py-1 rounded">
+                    {String(timeLeft.seconds).padStart(2, '0')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Time Setter (untuk demo) */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCustomFlashSaleTime(1, 0)}
+                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  title="Set 1 jam"
+                >
+                  1h
+                </button>
+                <button
+                  onClick={() => setCustomFlashSaleTime(3, 30)}
+                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  title="Set 3 jam 30 menit"
+                >
+                  3h 30m
+                </button>
+                <button
+                  onClick={() => setCustomFlashSaleTime(6, 0)}
+                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  title="Set 6 jam"
+                >
+                  6h
+                </button>
+              </div>
             </div>
+            
             <button
               onClick={() => router.push("/products?sort=expensive")}
               className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
@@ -284,6 +346,7 @@ export default function HomePage() {
               <ChevronRight size={20} />
             </button>
           </div>
+          
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             {featuredProducts.map((product) => (
               <ProductCard

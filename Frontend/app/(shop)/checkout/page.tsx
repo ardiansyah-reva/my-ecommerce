@@ -3,46 +3,72 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Truck, MapPin } from 'lucide-react';
+import { CreditCard, Truck, MapPin, Building2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cartAPI, orderAPI } from '@/lib/api';
-import { Cart } from '@/types';
+import { Cart, CartItem } from '@/types';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from 'react-hot-toast';
+
+const BANKS = [
+  { id: 'bca', name: 'Bank BCA', logo: '🏦' },
+  { id: 'mandiri', name: 'Bank Mandiri', logo: '🏦' },
+  { id: 'bni', name: 'Bank BNI', logo: '🏦' },
+  { id: 'bri', name: 'Bank BRI', logo: '🏦' },
+  { id: 'seabank', name: 'SeaBank', logo: '🏦' },
+  { id: 'permata', name: 'Bank Permata', logo: '🏦' },
+  { id: 'cimb', name: 'Bank CIMB Niaga', logo: '🏦' },
+];
+
+const EWALLETS = [
+  { id: 'gopay', name: 'GoPay', logo: '💚' },
+  { id: 'ovo', name: 'OVO', logo: '💜' },
+  { id: 'dana', name: 'DANA', logo: '💙' },
+  { id: 'shopeepay', name: 'ShopeePay', logo: '🧡' },
+  { id: 'linkaja', name: 'LinkAja', logo: '❤️' },
+];
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { clearCart } = useCartStore();
   const [cart, setCart] = useState<Cart | null>(null);
+  const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  const [selectedBank, setSelectedBank] = useState('bca');
+  const [selectedEwallet, setSelectedEwallet] = useState('gopay');
   const [courier, setCourier] = useState('JNE');
 
   useEffect(() => {
     fetchCart();
+    loadCheckoutItems();
   }, []);
 
   const fetchCart = async () => {
     try {
       const response = await cartAPI.get();
-      const cartData = response.data.data;
-      
-      console.log("Cart Data:", cartData);
-      
-      if (!cartData.items || cartData.items.length === 0) {
-        toast.error('Keranjang kosong');
-        router.push('/cart');
-        return;
-      }
-      
-      setCart(cartData);
+      setCart(response.data.data);
     } catch (error) {
       console.error("Fetch cart error:", error);
-      toast.error('Gagal memuat keranjang');
-      router.push('/cart');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCheckoutItems = () => {
+    const items = localStorage.getItem('checkoutItems');
+    if (items) {
+      const parsedItems = JSON.parse(items);
+      setCheckoutItems(parsedItems);
+      
+      if (parsedItems.length === 0) {
+        toast.error('Tidak ada produk dipilih');
+        router.push('/cart');
+      }
+    } else {
+      toast.error('Tidak ada produk dipilih');
+      router.push('/cart');
     }
   };
 
@@ -55,36 +81,44 @@ export default function CheckoutPage() {
   };
 
   const calculateTotal = () => {
-    return cart?.items?.reduce(
+    return checkoutItems.reduce(
       (sum, item) => sum + (item.product?.price || 0) * item.quantity,
       0
-    ) || 0;
+    );
   };
 
-  const shippingCost = 0; // Free shipping
+  const shippingCost = 0;
 
   const handlePlaceOrder = async () => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      toast.error('Keranjang kosong');
+    if (checkoutItems.length === 0) {
+      toast.error('Tidak ada produk dipilih');
       return;
     }
 
     setProcessing(true);
     try {
-      // Format data sesuai yang diharapkan backend
+      let paymentProvider = paymentMethod;
+      
+      // Set provider berdasarkan pilihan
+      if (paymentMethod === 'bank_transfer') {
+        paymentProvider = selectedBank;
+      } else if (paymentMethod === 'ewallet') {
+        paymentProvider = selectedEwallet;
+      }
+
       const orderData = {
-        items: cart.items.map((item) => ({
+        items: checkoutItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
         })),
         paymentData: {
           method: paymentMethod,
-          provider: paymentMethod, // Sama dengan method
+          provider: paymentProvider,
         },
         shipmentData: {
           courier: courier,
           shipping_cost: shippingCost,
-          tracking_number: `TRK-${Date.now()}` // Generate tracking number
+          tracking_number: `TRK-${Date.now()}`
         },
       };
 
@@ -92,29 +126,26 @@ export default function CheckoutPage() {
 
       const response = await orderAPI.create(orderData);
       
-      console.log("Order response:", response.data);
-
       if (response.data.status === 'success') {
         const orderId = response.data.data.order.id;
 
-        console.log("Order created successfully, ID:", orderId);
+        // Clear selected items dari localStorage
+        localStorage.removeItem('checkoutItems');
 
-        // Clear cart setelah order berhasil
-        try {
-          await cartAPI.get(); // Refresh cart
-          clearCart();
-        } catch (e) {
-          console.log("Cart already cleared");
+        // Hapus item yang sudah dicheckout dari cart
+        for (const item of checkoutItems) {
+          try {
+            await cartAPI.removeItem(item.id);
+          } catch (e) {
+            console.log("Item already removed");
+          }
         }
 
         toast.success('Pesanan berhasil dibuat!');
         
-        // IMPORTANT: Pastikan path benar - harus /orders (plural) bukan /order
         setTimeout(() => {
           router.push(`/orders/${orderId}`);
         }, 500);
-      } else {
-        throw new Error(response.data.message || 'Gagal membuat pesanan');
       }
     } catch (error: any) {
       console.error("Create order error:", error);
@@ -124,14 +155,6 @@ export default function CheckoutPage() {
         || 'Gagal membuat pesanan';
       
       toast.error(errorMessage);
-      
-      // Log detail error untuk debugging
-      if (error.response) {
-        console.error("Error response:", {
-          status: error.response.status,
-          data: error.response.data
-        });
-      }
     } finally {
       setProcessing(false);
     }
@@ -145,16 +168,16 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cart || !cart.items || cart.items.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-2">Keranjang Kosong</h2>
+          <h2 className="text-2xl font-bold mb-2">Tidak Ada Produk Dipilih</h2>
           <p className="text-gray-600 mb-6">
-            Tidak ada produk di keranjang untuk checkout
+            Silakan pilih produk dari keranjang terlebih dahulu
           </p>
-          <Button onClick={() => router.push('/products')}>
-            Mulai Belanja
+          <Button onClick={() => router.push('/cart')}>
+            Kembali ke Keranjang
           </Button>
         </div>
       </div>
@@ -218,27 +241,100 @@ export default function CheckoutPage() {
                 <CreditCard className="text-blue-600" size={24} />
                 <h2 className="text-xl font-bold">Metode Pembayaran</h2>
               </div>
-              <div className="space-y-3">
-                {[
-                  { value: 'bank_transfer', label: 'Transfer Bank' },
-                  { value: 'ewallet', label: 'E-Wallet' },
-                  { value: 'cod', label: 'Bayar di Tempat (COD)' },
-                ].map((method) => (
-                  <label
-                    key={method.value}
-                    className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-                  >
+              
+              <div className="space-y-4">
+                {/* Bank Transfer */}
+                <div className="border rounded-lg p-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="radio"
                       name="payment"
-                      value={method.value}
-                      checked={paymentMethod === method.value}
+                      value="bank_transfer"
+                      checked={paymentMethod === 'bank_transfer'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="w-4 h-4"
                     />
-                    <span className="font-medium">{method.label}</span>
+                    <Building2 size={20} className="text-blue-600" />
+                    <span className="font-medium">Transfer Bank</span>
                   </label>
-                ))}
+                  
+                  {paymentMethod === 'bank_transfer' && (
+                    <div className="mt-4 ml-7 grid grid-cols-2 gap-2">
+                      {BANKS.map((bank) => (
+                        <label
+                          key={bank.id}
+                          className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                            selectedBank === bank.id ? 'border-blue-600 bg-blue-50' : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="bank"
+                            value={bank.id}
+                            checked={selectedBank === bank.id}
+                            onChange={(e) => setSelectedBank(e.target.value)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-2xl">{bank.logo}</span>
+                          <span className="text-sm font-medium">{bank.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* E-Wallet */}
+                <div className="border rounded-lg p-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="ewallet"
+                      checked={paymentMethod === 'ewallet'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <Wallet size={20} className="text-blue-600" />
+                    <span className="font-medium">E-Wallet</span>
+                  </label>
+                  
+                  {paymentMethod === 'ewallet' && (
+                    <div className="mt-4 ml-7 grid grid-cols-2 gap-2">
+                      {EWALLETS.map((ewallet) => (
+                        <label
+                          key={ewallet.id}
+                          className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                            selectedEwallet === ewallet.id ? 'border-blue-600 bg-blue-50' : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="ewallet"
+                            value={ewallet.id}
+                            checked={selectedEwallet === ewallet.id}
+                            onChange={(e) => setSelectedEwallet(e.target.value)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-2xl">{ewallet.logo}</span>
+                          <span className="text-sm font-medium">{ewallet.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* COD */}
+                <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="cod"
+                    checked={paymentMethod === 'cod'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="font-medium">Bayar di Tempat (COD)</span>
+                </label>
               </div>
             </div>
           </div>
@@ -249,7 +345,7 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-bold mb-4">Ringkasan Pesanan</h2>
 
               <div className="max-h-48 overflow-y-auto mb-4 space-y-2">
-                {cart?.items?.map((item) => (
+                {checkoutItems.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       {item.product?.name} x{item.quantity}
@@ -286,7 +382,7 @@ export default function CheckoutPage() {
               <Button
                 onClick={handlePlaceOrder}
                 isLoading={processing}
-                disabled={processing || !cart || cart.items.length === 0}
+                disabled={processing}
                 className="w-full"
                 size="lg"
               >

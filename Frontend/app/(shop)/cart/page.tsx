@@ -16,6 +16,7 @@ export default function CartPage() {
   const [cart, setLocalCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
   useEffect(() => {
     fetchCart();
@@ -58,10 +59,29 @@ export default function CartPage() {
 
     try {
       await cartAPI.removeItem(itemId);
+      setSelectedItems(selectedItems.filter(id => id !== itemId));
       await fetchCart();
       toast.success('Item berhasil dihapus');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal menghapus item');
+    }
+  };
+
+  const handleSelectItem = (itemId: number) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (!cart?.items) return;
+    
+    if (selectedItems.length === cart.items.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(cart.items.map(item => item.id));
     }
   };
 
@@ -77,8 +97,25 @@ export default function CartPage() {
     return (item.product?.price || 0) * item.quantity;
   };
 
-  const calculateTotal = () => {
-    return cart?.items?.reduce((sum, item) => sum + calculateSubtotal(item), 0) || 0;
+  const calculateSelectedTotal = () => {
+    if (!cart?.items) return 0;
+    return cart.items
+      .filter(item => selectedItems.includes(item.id))
+      .reduce((sum, item) => sum + calculateSubtotal(item), 0);
+  };
+
+  const handleCheckout = () => {
+    if (selectedItems.length === 0) {
+      toast.error('Pilih minimal 1 produk untuk checkout');
+      return;
+    }
+    
+    // Simpan selected items ke localStorage untuk digunakan di checkout
+    const selectedCartItems = cart?.items?.filter(item => 
+      selectedItems.includes(item.id)
+    );
+    localStorage.setItem('checkoutItems', JSON.stringify(selectedCartItems));
+    router.push('/checkout');
   };
 
   if (loading) {
@@ -114,11 +151,37 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Select All */}
+            <div className="bg-white rounded-lg shadow p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.length === cart.items.length}
+                  onChange={handleSelectAll}
+                  className="w-5 h-5 rounded border-gray-300"
+                />
+                <span className="font-semibold">
+                  Pilih Semua ({cart.items.length} Produk)
+                </span>
+              </label>
+            </div>
+
+            {/* Cart Items */}
             {cart.items.map((item) => (
               <div
                 key={item.id}
                 className="bg-white rounded-lg shadow p-4 flex gap-4"
               >
+                {/* Checkbox */}
+                <div className="flex items-start pt-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.id)}
+                    onChange={() => handleSelectItem(item.id)}
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                </div>
+
                 {/* Product Image */}
                 <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   <img
@@ -194,10 +257,10 @@ export default function CartPage() {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Total ({cart.items.length} item)
+                    Total ({selectedItems.length} item dipilih)
                   </span>
                   <span className="font-semibold">
-                    {formatPrice(calculateTotal())}
+                    {formatPrice(calculateSelectedTotal())}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -210,17 +273,18 @@ export default function CartPage() {
                 <div className="flex justify-between text-lg">
                   <span className="font-bold">Total</span>
                   <span className="font-bold text-orange-600 text-xl">
-                    {formatPrice(calculateTotal())}
+                    {formatPrice(calculateSelectedTotal())}
                   </span>
                 </div>
               </div>
 
               <Button
-                onClick={() => router.push('/checkout')}
+                onClick={handleCheckout}
+                disabled={selectedItems.length === 0}
                 className="w-full"
                 size="lg"
               >
-                Lanjut ke Pembayaran
+                Checkout ({selectedItems.length})
               </Button>
 
               <button
