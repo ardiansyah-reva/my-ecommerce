@@ -1,4 +1,7 @@
-// types/index.ts
+// Frontend/types/index.ts
+
+export type UserRole = 'customer' | 'seller' | 'admin';
+export type SellerStatus = 'pending' | 'approved' | 'rejected' | 'suspended' | null;
 
 export interface User {
   id: number;
@@ -8,6 +11,10 @@ export interface User {
   phone?: string;
   profile_image?: string;
   birthday?: string;
+  role: UserRole; // ✅ NEW
+  seller_status?: SellerStatus; // ✅ NEW
+  shop_name?: string; // ✅ NEW
+  shop_description?: string; // ✅ NEW
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +52,32 @@ export interface Product {
   media?: ProductMedia[];
   created_at: string;
   updated_at: string;
+}
+
+// ✅ NEW: Flash Sale Types
+export type FlashSaleStatus = 'scheduled' | 'active' | 'ended';
+
+export interface FlashSale {
+  id: number;
+  name: string;
+  product_id: number;
+  product?: Product;
+  original_price: number;
+  flash_price: number;
+  discount_percentage: number;
+  stock: number;
+  max_per_user: number;
+  start_at: string;
+  end_at: string;
+  status: FlashSaleStatus;
+  created_at: string;
+  updated_at: string;
+  // Runtime properties
+  isActive?: boolean;
+  isUpcoming?: boolean;
+  isEnded?: boolean;
+  timeLeft?: number;
+  timeUntilStart?: number;
 }
 
 export interface CartItem {
@@ -140,4 +173,28 @@ export interface ProductFilters {
   min_price?: number;
   max_price?: number;
   sort?: 'latest' | 'oldest' | 'expensive' | 'cheap';
+}
+
+// ✅ NEW: Seller Dashboard Stats
+export interface SellerStats {
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  seller: {
+    name: string;
+    status: SellerStatus;
+  };
+}
+
+// ✅ NEW: Admin Dashboard Stats
+export interface AdminStats {
+  users: {
+    total: number;
+    sellers: number;
+    pendingSellers: number;
+  };
+  products: number;
+  orders: number;
+  revenue: number;
+  recentOrders: Order[];
 }

@@ -1,37 +1,49 @@
-// backend/routes/index.js
-
+// Backend/routes/index.js
 const express = require("express");
 const router = express.Router();
 
 const authController = require("../controllers/auth.controller");
 const authMiddleware = require("../middlewares/auth");
 
-// Import route lain
+// Import route modules yang sudah ada
 const userRoutes = require("./user.routes");
 const productRoutes = require("./product.routes");
 const orderRoutes = require("./order.routes");
 const cartRoutes = require("./cart.routes");
 const paymentRoutes = require("./payment.routes");
 const shipmentRoutes = require("./shipment.routes");
-const categoryRoutes = require("./category.routes"); // TAMBAHKAN INI
+const categoryRoutes = require("./category.routes");
 
-// Route utama
+// Root route
 router.get("/", (req, res) => {
-  res.json({ message: "API Route Connected" });
+  res.json({ 
+    message: "API Route Connected",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      products: "/api/products",
+      categories: "/api/categories",
+      cart: "/api/cart",
+      orders: "/api/orders"
+    }
+  });
 });
 
+// Auth routes
 router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
 router.get("/auth/me", authMiddleware, authController.me);
 router.post("/auth/logout", authController.logout);
 
-// Sub-routes lain
+// Public routes
 router.use("/users", userRoutes);
 router.use("/products", productRoutes);
+router.use("/categories", categoryRoutes);
+
+// Protected routes (require auth)
 router.use("/orders", orderRoutes);
 router.use("/cart", cartRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/shipment", shipmentRoutes);
-router.use("/categories", categoryRoutes); // TAMBAHKAN INI
 
 module.exports = router;

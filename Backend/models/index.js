@@ -14,6 +14,7 @@ const Payment = require('./Payment');
 const Shipment = require('./Shipment');
 const Category = require('./Category');
 const Brand = require('./Brand');
+const FlashSale = require('./FlashSale'); // ✅ NEW
 
 // =================== RELASI ===================
 
@@ -57,6 +58,10 @@ Payment.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 Order.hasOne(Shipment, { foreignKey: 'order_id', as: 'shipment' });
 Shipment.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 
+// ---------- FLASH SALE ---------- ✅ NEW
+FlashSale.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+Product.hasMany(FlashSale, { foreignKey: 'product_id', as: 'flashSales' });
+
 // Export semua models
 module.exports = {
   User,
@@ -71,5 +76,6 @@ module.exports = {
   Shipment,
   Category,
   Brand,
+  FlashSale, // ✅ NEW
   sequelize,
 };

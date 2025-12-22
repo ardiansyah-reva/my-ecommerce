@@ -34,10 +34,7 @@ export const Header: React.FC = () => {
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
+ 
   const fetchCategories = async () => {
     try {
       const response = await categoryAPI.getAll();
@@ -54,6 +51,9 @@ export const Header: React.FC = () => {
       console.error('Failed to fetch categories:', error);
     }
   };
+   useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

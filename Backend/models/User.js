@@ -35,6 +35,27 @@ const User = sequelize.define(
     birthday: {
       type: DataTypes.DATE,
     },
+    // ✅ TAMBAH ROLE FIELD
+    role: {
+      type: DataTypes.ENUM('customer', 'seller', 'admin'),
+      allowNull: false,
+      defaultValue: 'customer'
+    },
+    // ✅ TAMBAH STATUS UNTUK SELLER
+    seller_status: {
+      type: DataTypes.ENUM('pending', 'approved', 'rejected', 'suspended'),
+      allowNull: true,
+      defaultValue: null
+    },
+    // ✅ TAMBAH INFO SELLER
+    shop_name: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
+    shop_description: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
@@ -46,7 +67,7 @@ const User = sequelize.define(
   },
   {
     tableName: "users",
-    timestamps: false, // PENTING!
+    timestamps: false,
   }
 );
 
