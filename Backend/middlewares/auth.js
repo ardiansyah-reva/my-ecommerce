@@ -1,4 +1,3 @@
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
@@ -11,20 +10,27 @@ module.exports = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // ✅ PERBAIKAN:
     const user = await User.findByPk(decoded.id, {
-      attributes: ["id", "nickname", "email"],
+      attributes: [
+        "id",
+        "nickname",
+        "email",
+        "role",
+        "seller_status",
+        "shop_name",
+      ],
     });
-
-    if (!user)
-      return res.status(404).json({ message: "User tidak ditemukan" });
+    if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
 
     req.user = user;
     next();
-
   } catch (error) {
     // ✅ GANTI BAGIAN INI (dari 1 baris jadi 5 baris)
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: "Token sudah kadaluarsa, silakan login lagi" });
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ message: "Token sudah kadaluarsa, silakan login lagi" });
     }
     return res.status(401).json({ message: "Token tidak valid" });
     // ✅ SAMPAI SINI

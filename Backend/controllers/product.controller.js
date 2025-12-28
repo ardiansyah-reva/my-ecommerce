@@ -119,27 +119,31 @@ exports.getProductById = async (req, res) => {
 };
 
 // CREATE product
+// Backend/controllers/product.controller.js - UPDATE fungsi createProduct
+
 exports.createProduct = async (req, res) => {
   try {
     const { media, ...productData } = req.body;
 
-    // 1. Buat product
     const product = await Product.create(productData);
 
-    // 2. Simpan media kalau ada
     if (media && Array.isArray(media) && media.length > 0) {
       for (const m of media) {
         await ProductMedia.create({
           product_id: product.id,
           media_type: m.type || "image",
-          url: m.url
+          // ✅ PASTIKAN URL SUDAH BENAR
+          url: m.url.startsWith('/') ? m.url : `/${m.url}`
         });
       }
     }
 
-    // 3. Ambil ulang product + media
     const fullProduct = await Product.findByPk(product.id, {
-      include: [{ model: ProductMedia, as: "media" }]
+      include: [
+        { model: ProductMedia, as: "media" },
+        { model: Category, as: "category" },
+        { model: Brand, as: "brand" }
+      ]
     });
 
     res.status(201).json({
@@ -154,7 +158,7 @@ exports.createProduct = async (req, res) => {
     res.status(500).json({
       code: 500,
       status: "error",
-      message: "Server error"
+      message: error.message || "Server error"
     });
   }
 };

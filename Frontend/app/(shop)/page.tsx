@@ -289,24 +289,24 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <Zap className="text-orange-500" size={32} fill="currentColor" />
-                <h2 className="text-2xl font-bold">Flash Sale Hari Ini</h2>
+                
+                <h2 className="text-2xl font-bold">Flash Sale</h2>
               </div>
               
               {/* Countdown Timer */}
-              <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2  text-white px-4 py-2 rounded-lg">
                 <Clock size={20} />
-                <span className="font-semibold">Berakhir pada:</span>
+                <span className="font-semibold text-black">Berakhir dalam:</span>
                 <div className="flex items-center gap-1 font-mono text-lg">
-                  <div className="bg-white/20 px-2 py-1 rounded">
+                  <div className="bg-red-500 px-2 py-1 rounded">
                     {String(timeLeft.hours).padStart(2, '0')}
                   </div>
                   <span>:</span>
-                  <div className="bg-white/20 px-2 py-1 rounded">
+                  <div className="bg-red-500 px-2 py-1 rounded">
                     {String(timeLeft.minutes).padStart(2, '0')}
                   </div>
                   <span>:</span>
-                  <div className="bg-white/20 px-2 py-1 rounded">
+                  <div className="bg-red-500 px-2 py-1 rounded">
                     {String(timeLeft.seconds).padStart(2, '0')}
                   </div>
                 </div>
@@ -316,24 +316,24 @@ export default function HomePage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setCustomFlashSaleTime(1, 0)}
-                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  className="text-xs px-3 py-1 rounded"
                   title="Set 1 jam"
                 >
-                  1h
+                  
                 </button>
                 <button
                   onClick={() => setCustomFlashSaleTime(3, 30)}
-                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  className="text-xs  px-3 py-1 rounded"
                   title="Set 3 jam 30 menit"
                 >
-                  3h 30m
+                  
                 </button>
                 <button
                   onClick={() => setCustomFlashSaleTime(6, 0)}
-                  className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+                  className="text-xs px-3 py-1 rounded"
                   title="Set 6 jam"
                 >
-                  6h
+                
                 </button>
               </div>
             </div>

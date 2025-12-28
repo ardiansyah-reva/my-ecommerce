@@ -38,7 +38,7 @@ export default function ShopLayout({
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-bold text-lg mb-4">bursa</h3>
+              <h3 className="font-bold text-lg mb-4">Lazada</h3>
               <p className="text-gray-400 text-sm">
                 Platform belanja online terpercaya dengan produk berkualitas dan harga terbaik.
               </p>
@@ -69,7 +69,7 @@ export default function ShopLayout({
             </div>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-            © 2024 bursa. All rights reserved.
+            © 2024 Lazada. All rights reserved.
           </div>
         </div>
       </footer>

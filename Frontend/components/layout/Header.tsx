@@ -77,10 +77,10 @@ export const Header: React.FC = () => {
   return (
     <header className="bg-white shadow sticky top-0 z-40 border-b">
       {/* Top Bar */}
-      <div className="bg-gray-200 py-1 border-b">
+      <div className="bg-gray-200 py-1 ">
         <div className="container mx-auto px-4 flex justify-between text-xs  text-gray-700">
           <div className="flex gap-4">
-            <Link href="/seller" className="hover:text-amber-400">Menjadi Seller</Link>
+            {/* <Link href="/seller" className="hover:text-amber-400">Menjadi Seller</Link> */}
             <Link href="/help" className="hover:text-amber-400">Customer Care</Link>
           </div>
 
@@ -108,7 +108,7 @@ export const Header: React.FC = () => {
           
           {/* Logo */}
           <Link href="/" className="font-bold px-18 text-2xl  text-blue-800">
-            LAJANDA
+            Lazada
           </Link>
 
           {/* Search Bar */}
@@ -116,7 +116,7 @@ export const Header: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Cari di bursa"
+                placeholder="Cari di Lazada"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className=" bg-gray-200 w-full px-4 py-3 pr-12 border border-none focus:outline-none focus:ring-2 focus:ring-white"
