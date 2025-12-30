@@ -30,8 +30,8 @@ const EWALLETS = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { clearCart } = useCartStore();
-  const [cart, setCart] = useState<Cart | null>(null);
+  const { setCart } = useCartStore();
+  const [cart, setLocalCart] = useState<Cart | null>(null);
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -48,7 +48,7 @@ export default function CheckoutPage() {
   const fetchCart = async () => {
     try {
       const response = await cartAPI.get();
-      setCart(response.data.data);
+      setLocalCart(response.data.data);
     } catch (error) {
       console.error("Fetch cart error:", error);
     } finally {
@@ -99,7 +99,6 @@ export default function CheckoutPage() {
     try {
       let paymentProvider = paymentMethod;
       
-      // Set provider berdasarkan pilihan
       if (paymentMethod === 'bank_transfer') {
         paymentProvider = selectedBank;
       } else if (paymentMethod === 'ewallet') {
@@ -132,13 +131,21 @@ export default function CheckoutPage() {
         // Clear selected items dari localStorage
         localStorage.removeItem('checkoutItems');
 
-        // Hapus item yang sudah dicheckout dari cart
+        // ✅ FIX: Hapus HANYA item yang dicheckout dari cart
         for (const item of checkoutItems) {
           try {
             await cartAPI.removeItem(item.id);
           } catch (e) {
-            console.log("Item already removed");
+            console.log("Item already removed or error:", e);
           }
+        }
+
+        // ✅ Refresh cart untuk update UI
+        try {
+          const cartRes = await cartAPI.get();
+          setCart(cartRes.data.data);
+        } catch (e) {
+          console.log("Error refreshing cart:", e);
         }
 
         toast.success('Pesanan berhasil dibuat!');

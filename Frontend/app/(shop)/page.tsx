@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
+  ChevronLeft,
   TrendingUp,
   Zap,
   Package,
@@ -51,6 +52,25 @@ export default function HomePage() {
     );
   };
 
+  // ================= PRODUCT SLIDESHOW =================
+  const [productSlide, setProductSlide] = useState(0);
+  const productsPerSlide = 4;
+
+  const nextProductSlide = () => {
+    const maxSlide = Math.ceil(newProducts.length / productsPerSlide) - 1;
+    setProductSlide((prev) => (prev < maxSlide ? prev + 1 : 0));
+  };
+
+  const prevProductSlide = () => {
+    const maxSlide = Math.ceil(newProducts.length / productsPerSlide) - 1;
+    setProductSlide((prev) => (prev > 0 ? prev - 1 : maxSlide));
+  };
+
+  const visibleProducts = newProducts.slice(
+    productSlide * productsPerSlide,
+    productSlide * productsPerSlide + productsPerSlide
+  );
+
   // ================= FLASH SALE TIMER =================
   const [flashSaleEndTime] = useState<Date>(
     new Date(Date.now() + 3 * 60 * 60 * 1000 + 30 * 60 * 1000)
@@ -90,7 +110,7 @@ export default function HomePage() {
     try {
       const [featured, latest] = await Promise.all([
         productAPI.getAll({ limit: 8, sort: "expensive" }),
-        productAPI.getAll({ limit: 8, sort: "latest" }),
+        productAPI.getAll({ limit: 12, sort: "latest" }),
       ]);
 
       setFeaturedProducts(featured.data.data);
@@ -158,7 +178,6 @@ export default function HomePage() {
               </div>
             ))}
 
-            {/* PREV */}
             <button
               onClick={prevSlide}
               className="absolute left-2 top-1/2 -translate-y-1/2
@@ -175,7 +194,6 @@ export default function HomePage() {
               <ChevronRight size={16} className="rotate-180" />
             </button>
 
-            {/* NEXT */}
             <button
               onClick={nextSlide}
               className="absolute right-2 top-1/2 -translate-y-1/2
@@ -192,7 +210,6 @@ export default function HomePage() {
               <ChevronRight size={16} />
             </button>
 
-            {/* DOTS */}
             <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
               {heroSlides.map((_, idx) => (
                 <button
@@ -246,7 +263,7 @@ export default function HomePage() {
             </div>
 
             <button
-              onClick={() => router.push("/products?sort=expensive")}
+              onClick={() => router.push("/collections/flash-sale")}
               className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
             >
               Lihat Semua <ChevronRight />
@@ -264,27 +281,68 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* TERBARU */}
+        {/* TERBARU - SLIDESHOW */}
         <section>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold">Produk Terbaru</h2>
             <button
-              onClick={() => router.push("/products?sort=latest")}
+              onClick={() => router.push("/collections/new-arrival")}
               className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
             >
               Lihat Semua <ChevronRight />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            {newProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+          <div className="relative group">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {visibleProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+
+            {newProducts.length > productsPerSlide && (
+              <>
+                <button
+                  onClick={prevProductSlide}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4
+                             bg-white shadow-lg hover:bg-gray-50
+                             text-gray-800 p-3 rounded-full
+                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                <button
+                  onClick={nextProductSlide}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4
+                             bg-white shadow-lg hover:bg-gray-50
+                             text-gray-800 p-3 rounded-full
+                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
           </div>
+
+          {/* Dots indicator */}
+          {newProducts.length > productsPerSlide && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: Math.ceil(newProducts.length / productsPerSlide) }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setProductSlide(idx)}
+                  className={`h-2 rounded-full transition-all ${
+                    idx === productSlide ? "w-8 bg-blue-600" : "w-2 bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
