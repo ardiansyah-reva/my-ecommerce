@@ -1,3 +1,4 @@
+// Backend/services/cart.service.js
 const { Cart, CartItem, Product, ProductMedia } = require("../models");
 const sequelize = require("../db");
 
@@ -75,13 +76,16 @@ class CartService {
   }
 
   // --------------------------------------------------------
-  // UPDATE ITEM
+  // UPDATE ITEM (modified untuk terima cart_item_id)
   // --------------------------------------------------------
-  async updateItem(userId, productId, quantity) {
+  async updateItem(userId, cartItemId, quantity) {
     const cart = await this.getOrCreateCart(userId);
 
     const item = await CartItem.findOne({
-      where: { cart_id: cart.id, product_id: productId },
+      where: { 
+        id: cartItemId,  // ✅ Changed from product_id to id
+        cart_id: cart.id 
+      },
       include: [{ model: Product, as: "product" }]
     });
 
@@ -109,13 +113,16 @@ class CartService {
   }
 
   // --------------------------------------------------------
-  // REMOVE ITEM
+  // REMOVE ITEM (modified untuk terima cart_item_id)
   // --------------------------------------------------------
-  async removeItem(userId, productId) {
+  async removeItem(userId, cartItemId) {
     const cart = await this.getOrCreateCart(userId);
 
     const deleted = await CartItem.destroy({
-      where: { cart_id: cart.id, product_id: productId },
+      where: { 
+        id: cartItemId,  // ✅ Changed from product_id to id
+        cart_id: cart.id 
+      },
     });
 
     if (!deleted) {

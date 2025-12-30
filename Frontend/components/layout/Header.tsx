@@ -62,7 +62,7 @@ export const Header: React.FC = () => {
           <Link href="/help" className="text-gray-700 hover:text-orange-500">MENJADI SELLER</Link>
           <Link href="/help" className="hover:text-orange-500">CUSTOMER CARE</Link>
           <Link href="/help" className="hover:text-orange-500">LACAK PESANAN</Link>
-          <Link href="/help" className="hover:text-orange-500">CUSTOMER CARE</Link>
+          {/* <Link href="/help" className="hover:text-orange-500">CUSTOMER CARE</Link> */}
           <Link href="/login" className="hover:text-orange-500">LOGIN</Link>
           <Link href="/register" className="hover:text-orange-500">DAFTAR</Link>
         </div>

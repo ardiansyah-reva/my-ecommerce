@@ -1,82 +1,28 @@
-// product.controller.js
-const { Product, Category, Brand, ProductMedia } = require("../models");
-const { Op } = require("sequelize"); // ✅ ADDED - PENTING!
+// Backend/controllers/product.controller.js
+const productService = require("../services/product.service");
 
 /**
  * GET all products + search + filter + pagination
  */
 exports.getAllProducts = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search = "",
-      category_id,
-      brand_id,
-      min_price,
-      max_price,
-      sort = "latest"
-    } = req.query;
-
-    const offset = (page - 1) * limit;
-    const where = {};
-
-    // Search
-    if (search) {
-      where.name = { [Op.iLike]: `%${search}%` };
-    }
-
-    // Filter category
-    if (category_id) where.category_id = category_id;
-
-    // Filter brand
-    if (brand_id) where.brand_id = brand_id;
-
-    // Price range
-    if (min_price || max_price) {
-      where.price = {};
-      if (min_price) where.price[Op.gte] = min_price;
-      if (max_price) where.price[Op.lte] = max_price;
-    }
-
-    // Sorting
-    const sortOption = {
-      latest: ["created_at", "DESC"],
-      oldest: ["created_at", "ASC"],
-      expensive: ["price", "DESC"],
-      cheap: ["price", "ASC"],
-    };
-
-    const order = [sortOption[sort] || sortOption.latest];
-
-    const { count, rows } = await Product.findAndCountAll({
-      where,
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order,
-      include: [
-        { model: Category, as: "category" },
-        { model: Brand, as: "brand" },
-        { model: ProductMedia, as: "media" },
-      ],
-    });
+    const result = await productService.getAllProducts(req.query);
 
     return res.json({
       code: 200,
       status: "success",
-      total: count,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(count / limit),
-      data: rows,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: Math.ceil(result.total / result.limit),
+      data: result.products,
     });
-
   } catch (err) {
-    console.error(err);
+    console.error("GET ALL PRODUCTS ERROR:", err);
     res.status(500).json({
       code: 500,
       status: "error",
-      message: "Server error",
+      message: err.message || "Server error",
     });
   }
 };
@@ -86,30 +32,24 @@ exports.getAllProducts = async (req, res) => {
  */
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id, {
-      include: [
-        { model: Category, as: "category" },
-        { model: Brand, as: "brand" },
-        { model: ProductMedia, as: "media" },
-      ]
-    });
-
-    if (!product) {
-      return res.status(404).json({
-        code: 404,
-        status: "error",
-        message: "Product not found",
-      });
-    }
+    const product = await productService.getProductById(req.params.id);
 
     return res.json({
       code: 200,
       status: "success",
       data: product,
     });
-
   } catch (err) {
-    console.error(err);
+    console.error("GET PRODUCT BY ID ERROR:", err);
+    
+    if (err.message === "Product not found") {
+      return res.status(404).json({
+        code: 404,
+        status: "error",
+        message: err.message,
+      });
+    }
+
     res.status(500).json({
       code: 500,
       status: "error",
@@ -118,41 +58,19 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// CREATE product
-// Backend/controllers/product.controller.js - UPDATE fungsi createProduct
-
+/**
+ * CREATE product
+ */
 exports.createProduct = async (req, res) => {
   try {
-    const { media, ...productData } = req.body;
-
-    const product = await Product.create(productData);
-
-    if (media && Array.isArray(media) && media.length > 0) {
-      for (const m of media) {
-        await ProductMedia.create({
-          product_id: product.id,
-          media_type: m.type || "image",
-          // ✅ PASTIKAN URL SUDAH BENAR
-          url: m.url.startsWith('/') ? m.url : `/${m.url}`
-        });
-      }
-    }
-
-    const fullProduct = await Product.findByPk(product.id, {
-      include: [
-        { model: ProductMedia, as: "media" },
-        { model: Category, as: "category" },
-        { model: Brand, as: "brand" }
-      ]
-    });
+    const product = await productService.createProduct(req.body);
 
     res.status(201).json({
       code: 201,
       status: "success",
       message: "Product created",
-      data: fullProduct
+      data: product
     });
-
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);
     res.status(500).json({
@@ -163,22 +81,12 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-
-
-// UPDATE product
+/**
+ * UPDATE product
+ */
 exports.updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
-        code: 404,
-        status: "error",
-        message: "Product not found",
-      });
-    }
-
-    await product.update(req.body);
+    const product = await productService.updateProduct(req.params.id, req.body);
 
     res.json({
       code: 200,
@@ -187,7 +95,16 @@ exports.updateProduct = async (req, res) => {
       data: product,
     });
   } catch (error) {
-    console.error(error);
+    console.error("UPDATE PRODUCT ERROR:", error);
+    
+    if (error.message === "Product not found") {
+      return res.status(404).json({
+        code: 404,
+        status: "error",
+        message: error.message,
+      });
+    }
+
     res.status(500).json({ 
       code: 500,
       status: "error", 
@@ -196,20 +113,12 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
-// DELETE product
+/**
+ * DELETE product
+ */
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
-        code: 404,
-        status: "error",
-        message: "Product not found",
-      });
-    }
-
-    await product.destroy();
+    await productService.deleteProduct(req.params.id);
 
     res.json({
       code: 200,
@@ -217,7 +126,16 @@ exports.deleteProduct = async (req, res) => {
       message: "Product deleted",
     });
   } catch (error) {
-    console.error(error);
+    console.error("DELETE PRODUCT ERROR:", error);
+    
+    if (error.message === "Product not found") {
+      return res.status(404).json({
+        code: 404,
+        status: "error",
+        message: error.message,
+      });
+    }
+
     res.status(500).json({ 
       code: 500,
       status: "error", 

@@ -52,7 +52,7 @@ export default function HomePage() {
     );
   };
 
-  // ================= PRODUCT SLIDESHOW =================
+  // ================= PRODUCT SLIDESHOW (TERBARU) =================
   const [productSlide, setProductSlide] = useState(0);
   const productsPerSlide = 4;
 
@@ -69,6 +69,25 @@ export default function HomePage() {
   const visibleProducts = newProducts.slice(
     productSlide * productsPerSlide,
     productSlide * productsPerSlide + productsPerSlide
+  );
+
+  // ================= FLASH SALE SLIDESHOW =================
+  const [flashSlide, setFlashSlide] = useState(0);
+  const flashPerSlide = 4;
+
+  const nextFlashSlide = () => {
+    const maxSlide = Math.ceil(featuredProducts.length / flashPerSlide) - 1;
+    setFlashSlide((prev) => (prev < maxSlide ? prev + 1 : 0));
+  };
+
+  const prevFlashSlide = () => {
+    const maxSlide = Math.ceil(featuredProducts.length / flashPerSlide) - 1;
+    setFlashSlide((prev) => (prev > 0 ? prev - 1 : maxSlide));
+  };
+
+  const visibleFlashProducts = featuredProducts.slice(
+    flashSlide * flashPerSlide,
+    flashSlide * flashPerSlide + flashPerSlide
   );
 
   // ================= FLASH SALE TIMER =================
@@ -159,7 +178,7 @@ export default function HomePage() {
       <section className="pt-6 pb-8">
         <div className="container mx-auto px-4">
           <div
-            className="relative mx-auto overflow-hidden  bg-gray-900 shadow-xl group"
+            className="relative mx-auto overflow-hidden bg-gray-900 shadow-xl group"
             style={{ height: "344px", maxWidth: "988px" }}
           >
             {heroSlides.map((slide, idx) => (
@@ -182,14 +201,8 @@ export default function HomePage() {
               onClick={prevSlide}
               className="absolute left-2 top-1/2 -translate-y-1/2
                          bg-white/70 hover:bg-white
-                         text-gray-800
-                         p-1.5
-                         rounded-full
-                         shadow
-                         z-10
-                         opacity-0
-                         group-hover:opacity-100
-                         transition-opacity"
+                         text-gray-800 p-1.5 rounded-full shadow
+                         z-10 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <ChevronRight size={16} className="rotate-180" />
             </button>
@@ -198,14 +211,8 @@ export default function HomePage() {
               onClick={nextSlide}
               className="absolute right-2 top-1/2 -translate-y-1/2
                          bg-white/70 hover:bg-white
-                         text-gray-800
-                         p-1.5
-                         rounded-full
-                         shadow
-                         z-10
-                         opacity-0
-                         group-hover:opacity-100
-                         transition-opacity"
+                         text-gray-800 p-1.5 rounded-full shadow
+                         z-10 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <ChevronRight size={16} />
             </button>
@@ -225,42 +232,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= FEATURES ================= */}
-      <section className="bg-white py-8 shadow-sm">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Package, title: "Gratis Ongkir", desc: "Min. belanja 50k" },
-            { icon: Zap, title: "Flash Sale", desc: "Setiap hari" },
-            { icon: TrendingUp, title: "Cashback", desc: "Hingga 50%" },
-            { icon: Package, title: "Garansi", desc: "100% original" },
-          ].map((f, i) => (
-            <div key={i} className="flex items-center gap-3 p-4">
-              <f.icon size={32} className="text-blue-600" />
-              <div>
-                <div className="font-semibold text-sm">{f.title}</div>
-                <div className="text-xs text-gray-600">{f.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ================= PRODUCTS ================= */}
       <div className="container mx-auto px-4 py-12 space-y-12">
         {/* FLASH SALE */}
         <section>
           <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold">Flash Sale</h2>
-              <div className="flex items-center gap-2">
-                <Clock size={18} />
-                <span className="font-mono text-lg">
-                  {String(timeLeft.hours).padStart(2, "0")}:
-                  {String(timeLeft.minutes).padStart(2, "0")}:
-                  {String(timeLeft.seconds).padStart(2, "0")}
-                </span>
-              </div>
-            </div>
+           <div className="flex flex-col items-start gap-1">
+  <h2 className="text-2xl font-bold">Flash Sale</h2>
+
+  <div className="flex items-center gap-2">
+    <p className="text-amber-600 pr-13">Dijual Sekarang</p>
+    <p>Berakhir dalam</p>
+    <Clock size={18} />
+    <div className="flex items-center gap-1 font-mono text-lg text-white">
+  {/* JAM */}
+  <span className="bg-red-500 px-2 py-1 rounded">
+    {String(timeLeft.hours).padStart(2, "0")}
+  </span>
+
+  <span className="text-black">:</span>
+
+  {/* MENIT */}
+  <span className="bg-red-500 px-2 py-1 rounded text-white">
+    {String(timeLeft.minutes).padStart(2, "0")}
+  </span>
+
+  <span className="text-black">:</span>
+
+  {/* DETIK */}
+  <span className="bg-red-500 px-2 py-1 rounded ">
+    {String(timeLeft.seconds).padStart(2, "0")}
+  </span>
+</div>
+
+  </div>
+</div>
+
 
             <button
               onClick={() => router.push("/collections/flash-sale")}
@@ -270,18 +277,60 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            {featuredProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+          <div className="relative group">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {visibleFlashProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </div>
+
+            {featuredProducts.length > flashPerSlide && (
+              <>
+                <button
+                  onClick={prevFlashSlide}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4
+                             bg-white shadow-lg hover:bg-gray-50
+                             text-gray-800 p-3 rounded-full
+                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                <button
+                  onClick={nextFlashSlide}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4
+                             bg-white shadow-lg hover:bg-gray-50
+                             text-gray-800 p-3 rounded-full
+                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
           </div>
+
+          {featuredProducts.length > flashPerSlide && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({
+                length: Math.ceil(featuredProducts.length / flashPerSlide),
+              }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setFlashSlide(idx)}
+                  className={`h-2 rounded-full transition-all ${
+                    idx === flashSlide ? "w-8 bg-blue-600" : "w-2 bg-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* TERBARU - SLIDESHOW */}
+        {/* TERBARU */}
         <section>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold">Produk Terbaru</h2>
@@ -303,46 +352,7 @@ export default function HomePage() {
                 />
               ))}
             </div>
-
-            {newProducts.length > productsPerSlide && (
-              <>
-                <button
-                  onClick={prevProductSlide}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4
-                             bg-white shadow-lg hover:bg-gray-50
-                             text-gray-800 p-3 rounded-full
-                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-
-                <button
-                  onClick={nextProductSlide}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4
-                             bg-white shadow-lg hover:bg-gray-50
-                             text-gray-800 p-3 rounded-full
-                             opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
           </div>
-
-          {/* Dots indicator */}
-          {newProducts.length > productsPerSlide && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: Math.ceil(newProducts.length / productsPerSlide) }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setProductSlide(idx)}
-                  className={`h-2 rounded-full transition-all ${
-                    idx === productSlide ? "w-8 bg-blue-600" : "w-2 bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </section>
       </div>
     </div>
