@@ -41,11 +41,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 KETIKA SUDAH -(DONE)
 KETIKA MASI DI KERJAKAN -(ONPROGRESS)
 
-1. tolong update all page categori menjadi: collections/[slug] 
-2. ketika click categori lalu click link apapun seharusnya modalnya tertutup 
+1. tolong update all page categori menjadi: collections/[slug] -(DONE)
+2. ketika click categori lalu click link apapun seharusnya modalnya tertutup -(DONE)
 3. smua navigasi dari all product sampai falsh sale seharusnya pathnya seperti no.1 
-4. benner seharusnya tidak di upload,lalu image ada di folder 
-5. flash sale: seharusnya 4 product tapi slideshow
+4. benner seharusnya tidak di upload,lalu image ada di folder -(DONE)
+5. flash sale: seharusnya 4 product tapi slideshow -(ONPROGRESS)
 6. harusnya fitur lihat smua di flashsale direct ke collections/flash-sale
 7. product terbaru: harusnya 4 product tapi slideshow
 8. harusnya fitur lihat smua di product terbaru direct ke collections/new-arrival

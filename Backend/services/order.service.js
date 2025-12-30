@@ -5,7 +5,7 @@ class OrderService {
   /**
    * Get all orders dengan pagination
    */
-  async getAllOrders(userId = null, page = 1, limit = 10) {
+  async getAllOrders(userId, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
     const where = userId ? { user_id: userId } : {};
 
@@ -42,8 +42,13 @@ class OrderService {
   /**
    * Get order by ID
    */
-  async getOrderById(orderId) {
-    const order = await Order.findByPk(orderId, {
+  async getOrderById(orderId, userId) {
+    const order = await Order.findOne({
+      where: { 
+        id: orderId,
+        user_id: userId // Hanya bisa akses order sendiri
+      },
+    }, {
       include: [
         { 
           model: User, 

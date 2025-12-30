@@ -1,35 +1,14 @@
 // Backend/controllers/order.controller.js
 const { Order, OrderItem, Product, User, Payment, Shipment, ProductMedia, Category, Brand } = require("../models");
 const sequelize = require("../db");
+const orderService = require("../services/order.service");
 
 // GET semua order (dengan filter user jika perlu)
 exports.getAllOrder = async (req, res) => {
   try {
     const userId = req.user.id; // Hanya ambil order user yang login
     
-    const orders = await Order.findAll({
-      where: { user_id: userId },
-      include: [
-        {
-          model: OrderItem,
-          as: "items",
-          include: [
-            {
-              model: Product,
-              as: "product",
-              include: [
-                { model: ProductMedia, as: "media" },
-                { model: Category, as: "category" },
-                { model: Brand, as: "brand" }
-              ]
-            }
-          ]
-        },
-        { model: Payment, as: "payment" },
-        { model: Shipment, as: "shipment" }
-      ],
-      order: [["created_at", "DESC"]]
-    });
+    const orders = await orderService.getAllOrders(userId);
 
     res.json({
       code: 200,
@@ -51,31 +30,7 @@ exports.getOrderById = async (req, res) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const order = await Order.findOne({
-      where: { 
-        id: id,
-        user_id: userId // Hanya bisa akses order sendiri
-      },
-      include: [
-        {
-          model: OrderItem,
-          as: "items",
-          include: [
-            {
-              model: Product,
-              as: "product",
-              include: [
-                { model: ProductMedia, as: "media" },
-                { model: Category, as: "category" },
-                { model: Brand, as: "brand" }
-              ]
-            }
-          ]
-        },
-        { model: Payment, as: "payment" },
-        { model: Shipment, as: "shipment" }
-      ]
-    });
+    const order = await orderService.getOrderById(id, userId);
 
     if (!order) {
       return res.status(404).json({ 

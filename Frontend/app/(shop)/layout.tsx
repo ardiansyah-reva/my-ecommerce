@@ -24,7 +24,7 @@ export default function ShopLayout({
   const fetchCart = async () => {
     try {
       const response = await cartAPI.get();
-      setCart(response.data.data);
+      setCart(response.data?.data);
     } catch (error) {
       console.error('Failed to fetch cart:', error);
     }

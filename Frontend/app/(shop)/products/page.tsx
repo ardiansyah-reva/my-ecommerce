@@ -41,7 +41,7 @@ export default function ProductsPage() {
   const fetchCategories = async () => {
     try {
       const response = await categoryAPI.getAll();
-      setCategories(response.data.data || []);
+      setCategories(response.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
@@ -62,10 +62,11 @@ export default function ProductsPage() {
       });
 
       const response = await productAPI.getAll(params);
-      setProducts(response.data.data);
-      setTotal(response.data.total || 0);
+      setProducts(response.data?.data || []);
+      setTotal(response.data?.total || 0);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      toast.error('Gagal memuat produk');
     } finally {
       setLoading(false);
     }
@@ -85,7 +86,7 @@ export default function ProductsPage() {
       });
 
       const cartRes = await cartAPI.get();
-      setCart(cartRes.data.data);
+      setCart(cartRes.data?.data);
 
       toast.success('Produk berhasil ditambahkan ke keranjang');
     } catch (error: any) {

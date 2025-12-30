@@ -34,7 +34,12 @@ export default function CollectionPage() {
     try {
       // Fetch category by slug
       const categoryRes = await categoryAPI.getBySlug(params.slug as string);
-      const categoryData = categoryRes.data.data;
+      const categoryData = categoryRes.data?.data;
+      
+      if (!categoryData) {
+        throw new Error('Category not found');
+      }
+      
       setCategory(categoryData);
 
       // Fetch products by category
@@ -45,8 +50,8 @@ export default function CollectionPage() {
         sort: sortBy,
       });
 
-      setProducts(productsRes.data.data);
-      setTotal(productsRes.data.total || 0);
+      setProducts(productsRes.data?.data || []);
+      setTotal(productsRes.data?.total || 0);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Kategori tidak ditemukan');
@@ -70,7 +75,7 @@ export default function CollectionPage() {
       });
 
       const cartRes = await cartAPI.get();
-      setCart(cartRes.data.data);
+      setCart(cartRes.data?.data);
 
       toast.success('Produk berhasil ditambahkan ke keranjang');
     } catch (error: any) {
